@@ -55,5 +55,8 @@ async def main():
             print(json.dumps(all_data[0], indent=2))
             print(len(all_data))
 
-if __name__ == "__main__":
-    asyncio.run(main())
+        return all_data
+
+def run_async():
+    all_data =  asyncio.run(main())
+    return all_data
