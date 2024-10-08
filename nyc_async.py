@@ -35,7 +35,7 @@ async def get_total_count(session: aiohttp.ClientSession) -> int:
         return MAX_ITEMS
 
 
-async def main():
+async def fetch_data_from_api():
 
     async with aiohttp.ClientSession() as session:
         total_count = min(await get_total_count(session), MAX_ITEMS)
@@ -51,12 +51,11 @@ async def main():
         print(f"Total records retrieved {sum([len(response) for response in responses])}")
 
         if all_data:
-            print("First record")
-            print(json.dumps(all_data[0], indent=2))
             print(len(all_data))
 
         return all_data
 
-def run_async():
-    all_data =  asyncio.run(main())
+
+async def run_async():
+    all_data =  await fetch_data_from_api()
     return all_data
