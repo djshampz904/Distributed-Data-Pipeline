@@ -4,6 +4,7 @@ import redis
 import json
 import aioredis
 import asyncio
+import nyc_async
 
 
 async def start_redis(local_host: str, port: int, dbms: int) -> aioredis.Redis:
@@ -39,10 +40,36 @@ async def fetch_data(redis_server: aioredis.Redis, key: str) -> dict:
         print(f"Error fetching data from Redis Server: {e}")
         return None
 
+async def get_or_cache_data(redis_server: aioredis.Redis):
+    cached_data_key = 'api_cached_key'
+    cached = await redis_server.get(cached_data_key)
+    # checked if there is data cached
+    if cached:
+        print("Fetching data from cache......")
+        data = json.loads(cached)
+        if not data:
+            print("Cached data empty")
+            await redis_server.delete(cached_data_key)
+        else:
+            return data
 
-async def main():
+
+    data = await nyc_async.run_async()
+    pipeline = redis_server.pipeline()
+
+    for index, value in enumerate(data):
+        key = f"{value['license_nbr']}"
+        pipeline.set(key, json.dumps(value))
+
+    await pipeline.execute()
+
+    await redis_server.set(cached_data_key, json.dumps(data), ex=3600)
+
+    return data
+
+async def start_redis_fetch_data():
     redis_server = await start_redis('localhost', 6379, 0)
     if redis_server:
-        all_data = await fetch_data(redis_server, '*')
-        print(json.dumps(all_data, indent=2))
+        all_data = await get_or_cache_data(redis_server)
+        return all_data
 
