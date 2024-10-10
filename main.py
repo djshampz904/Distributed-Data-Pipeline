@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
-import nyc_async as nyc
-import mongo_db
-import redis_server
+from configs import mongo_db, nyc_async as nyc, redis_server
 import asyncio
-import json
 
 """ Main Module """
 

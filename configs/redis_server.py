@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
-import redis
 import json
 import aioredis
 import asyncio
-import nyc_async
+from configs import nyc_async
 
 
 async def start_redis(local_host: str, port: int, dbms: int) -> aioredis.Redis:

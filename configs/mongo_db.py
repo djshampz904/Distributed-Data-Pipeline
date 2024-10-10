@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from pymongo import MongoClient
 import pymongo
+from bson import ObjectId
 
 
 def start_mongo(local_host: str, port: int) -> MongoClient:
@@ -11,6 +12,7 @@ def start_mongo(local_host: str, port: int) -> MongoClient:
     except Exception as e:
         print(f"Error connecting to MongoDB Server: {e}")
         return None
+
 
 def insert_data(client: MongoClient, db_name: str, collection_name: str, data: dict) -> bool:
     """ Insert Data into MongoDB """
@@ -28,6 +30,7 @@ def insert_data(client: MongoClient, db_name: str, collection_name: str, data: d
         print(f"Error inserting data into MongoDB: {e}")
         return False
 
+
 def create_index(client: MongoClient, db_name: str, collection_name: str, column_name: str):
     database = client[db_name]
     collection_name = database[collection_name]
@@ -41,3 +44,24 @@ def create_index(client: MongoClient, db_name: str, collection_name: str, column
         print(f"Unique index created on '{column_name}'")
     # check if index created
     print(collection_name.list_indexes())
+
+
+def fetch_all_data(client: MongoClient, db_name: str, collection_name: str):
+    database = client[db_name]
+    collection_name = database[collection_name]
+
+    data = collection_name.find({})
+    return (data)
+
+
+def serialize_doc(doc):
+    """Convert MongoDB document to JSON serializable format."""
+    if isinstance(doc, dict):
+        for key, value in doc.items():
+            if isinstance(value, ObjectId):
+                doc[key] = str(value)
+            elif isinstance(value, (dict, list)):
+                doc[key] = serialize_doc(value)
+    elif isinstance(doc, list):
+        return [serialize_doc(item) for item in doc]
+    return doc
