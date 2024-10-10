@@ -9,7 +9,7 @@ import requests
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root)
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from configs import mongo_db
 from flask_cors import CORS
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -44,7 +44,7 @@ async def get_data():
     if has_next:
         result['next_cursor'] = str(documents[-1]['_id'])
 
-    return jsonify(result)
+    return render_template('index.html', data=result)
 
 
 def fetch_next_page(cursor=None):

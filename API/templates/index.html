@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Licenses</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Business Licenses</h1>
+     <table>
+        <thead>
+            <tr>
+                {% set all_keys = [] %}
+                {% for item in data.data %}
+                    {% for key in item.keys() %}
+                        {% if key not in all_keys %}
+                            {% set _ = all_keys.append(key) %}
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+                {% for header in all_keys %}
+                    <th>{{ header }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in data.data %}
+            <tr>
+                {% for key in all_keys %}
+                    <td>{{ item[key] if key in item else 'N/A' }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% if data.has_next %}
+    <a href="?cursor={{ data.next_cursor }}">Next Page</a>
+    {% endif %}
+</body>
+</html>
