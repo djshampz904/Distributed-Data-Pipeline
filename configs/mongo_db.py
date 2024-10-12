@@ -19,7 +19,6 @@ def insert_data(client: MongoClient, db_name: str, collection_name: str, data: d
     try:
         db = client[db_name]
         collection = db[collection_name]
-        collection.insert_many(data)
         print("Inserting data")
         for value in data:
             record = collection.find_one({'license_nbr': value['license_nbr']})

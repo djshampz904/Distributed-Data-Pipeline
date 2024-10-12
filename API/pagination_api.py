@@ -2,9 +2,8 @@
 
 import sys
 import os
-import asyncio
+import logging
 from bson import ObjectId
-import requests
 
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(project_root)
@@ -12,54 +11,51 @@ sys.path.append(project_root)
 from flask import Flask, jsonify, request, render_template
 from configs import mongo_db
 from flask_cors import CORS
-from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import MongoClient
 
-MONGO_CLIENT = AsyncIOMotorClient('mongodb://localhost:27017')
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+
+MONGO_CLIENT = MongoClient('mongodb://localhost:27017')  # Synchronous MongoClient
 app = Flask(__name__)
 CORS(app)
 
 db = MONGO_CLIENT['Business_lsc']
 collection = db['licenses']
 
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-@app.route('/data')
-async def get_data():
-    limit = int(request.args.get('limit', 10))
-    cursor = request.args.get('cursor')
+@app.route('/api/data', methods=['GET'])
+def get_data():
+    try:
+        limit = int(request.args.get('limit', 50))  # Items per page
+        page = int(request.args.get('page', 1))  # Current page number
 
-    query = {}
-    if cursor:
-        query['id'] = {'$gt': ObjectId(cursor)}
+        if page < 1:
+            return jsonify({"error": "Invalid page number"}), 400
 
-    cursor = collection.find(query).limit(limit + 1)
-    documents = await cursor.to_list(length=limit + 1)
+        skip = (page - 1) * limit  # Calculate how many documents to skip
 
-    has_next = len(documents) > limit
-    documents = documents[:limit]
+        query = {}  # You can add any filters here if necessary
+        cursor = collection.find(query).skip(skip).limit(limit)
 
-    result = {
-        'data': [mongo_db.serialize_doc(doc) for doc in documents],
-        'has_next': has_next
-    }
-    if has_next:
-        result['next_cursor'] = str(documents[-1]['_id'])
+        documents = list(cursor)
+        total_docs = collection.count_documents(query)
+        total_pages = (total_docs + limit - 1) // limit  # Total pages calculation
 
-    return render_template('index.html', data=result)
+        result = {
+            'data': [mongo_db.serialize_doc(doc) for doc in documents],
+            'total_pages': total_pages,
+            'current_page': page
+        }
 
-
-def fetch_next_page(cursor=None):
-    # Send cursor if provided for pagination
-    params = {'limit': 10}
-    if cursor:
-        params['cursor'] = cursor
-
-    response = requests.get('http://localhost:3000/data', params=params)
-
-    if response.status_code == 200:
-        data = response.json()
-        return jsonify(data)
-    else:
-        return {"error": "Failed to fetch data from the API."}
+        app.logger.info(f"Fetched {len(documents)} documents for page {page}")
+        return jsonify(result)
+    except Exception as e:
+        app.logger.error(f"Error fetching data: {str(e)}")
+        return jsonify({"error": "An error occurred while fetching data"}), 500
 
 if __name__ == '__main__':
-    app.run(port=3000)
+    app.run(port=3000, debug=True)

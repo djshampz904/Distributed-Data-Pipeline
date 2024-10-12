@@ -9,46 +9,132 @@
             border-collapse: collapse;
             width: 100%;
         }
+
         th, td {
             border: 1px solid #ddd;
             padding: 8px;
             text-align: left;
         }
+
         th {
             background-color: #f2f2f2;
+        }
+
+        #error-message {
+            color: red;
+            font-weight: bold;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .pagination button {
+            margin: 0 5px;
+            padding: 10px;
         }
     </style>
 </head>
 <body>
-    <h1>Business Licenses</h1>
-     <table>
-        <thead>
-            <tr>
-                {% set all_keys = [] %}
-                {% for item in data.data %}
-                    {% for key in item.keys() %}
-                        {% if key not in all_keys %}
-                            {% set _ = all_keys.append(key) %}
-                        {% endif %}
-                    {% endfor %}
-                {% endfor %}
-                {% for header in all_keys %}
-                    <th>{{ header }}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in data.data %}
-            <tr>
-                {% for key in all_keys %}
-                    <td>{{ item[key] if key in item else 'N/A' }}</td>
-                {% endfor %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% if data.has_next %}
-    <a href="?cursor={{ data.next_cursor }}">Next Page</a>
-    {% endif %}
+<h1>Business Licenses</h1>
+<div id="error-message"></div>
+<div id="table-container"></div>
+<div class="pagination" id="pagination-container"></div>
+
+<script>
+    let currentPage = 1;
+    let totalPages = 1;
+
+    function createTable(data) {
+        if (data.length === 0) {
+            return '<p>No data available.</p>';
+        }
+
+        let table = '<table><thead><tr>';
+        const allKeys = new Set();
+        data.forEach(item => Object.keys(item).forEach(key => allKeys.add(key)));
+
+        allKeys.forEach(header => {
+            table += `<th>${header}</th>`;
+        });
+        table += '</tr></thead><tbody>';
+
+        data.forEach(item => {
+            table += '<tr>';
+            allKeys.forEach(key => {
+                table += `<td>${item[key] || 'N/A'}</td>`;
+            });
+            table += '</tr>';
+        });
+        table += '</tbody></table>';
+        return table;
+    }
+
+    function createPagination(totalPages, currentPage) {
+        let paginationHtml = '';
+        for (let i = 1; i <= totalPages; i++) {
+            paginationHtml += `<button ${i === currentPage ? 'disabled' : ''} onclick="loadData(${i})">${i}</button>`;
+        }
+        document.getElementById('pagination-container').innerHTML = paginationHtml;
+    }
+
+    function loadData(page = 1) {
+        const url = `/api/data?page=${page}&limit=50`;
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(result => {
+                const tableHtml = createTable(result.data);
+                document.getElementById('table-container').innerHTML = tableHtml;
+                totalPages = result.total_pages;
+                currentPage = result.current_page;
+                createPagination(totalPages, currentPage);
+                document.getElementById('error-message').textContent = '';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('error-message').textContent = 'Failed to fetch data. Please try again later.';
+            });
+    }
+
+    function createPagination(totalPages, currentPage) {
+        const maxVisiblePages = 5;  // Define how many pages to display at a time
+        let paginationHtml = '';
+
+        // Add "Previous" button
+        if (currentPage > 1) {
+            paginationHtml += `<button onclick="loadData(${currentPage - 1})">Previous</button>`;
+        }
+
+        // Calculate the start and end page numbers
+        let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+        // Adjust start and end if we're near the first or last pages
+        if (endPage - startPage + 1 < maxVisiblePages) {
+            startPage = Math.max(1, endPage - maxVisiblePages + 1);
+        }
+
+        // Create page buttons
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHtml += `<button ${i === currentPage ? 'disabled' : ''} onclick="loadData(${i})">${i}</button>`;
+        }
+
+        // Add "Next" button
+        if (currentPage < totalPages) {
+            paginationHtml += `<button onclick="loadData(${currentPage + 1})">Next</button>`;
+        }
+
+        document.getElementById('pagination-container').innerHTML = paginationHtml;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => loadData(currentPage));
+</script>
 </body>
 </html>
