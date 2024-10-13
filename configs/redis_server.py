@@ -72,3 +72,4 @@ async def start_redis_fetch_data():
         all_data = await get_or_cache_data(redis_server)
         return all_data
 
+

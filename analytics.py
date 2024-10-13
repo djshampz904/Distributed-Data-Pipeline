@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from pymongo import MongoClient
 from bson.json_util import dumps
 from celery_task import calculate_analytics, process_data
 from celery.exceptions import OperationalError as CeleryOperationalError
+from flask_caching import Cache
 
 app = Flask(__name__)
 
@@ -14,18 +15,12 @@ collection = db['licenses']
 
 @app.route('/')
 def home():
-    return jsonify({
-        "message": "Welcome to the Business License Analytics API",
-        "endpoints": {
-            "/api/analytics": "GET - Retrieve analytics",
-            "/api/licenses/by-status": "GET - Get licenses grouped by status",
-            "/api/licenses/by-category": "GET - Get licenses grouped by category",
-            "/api/licenses": "GET - Retrieve all licenses (paginated)"
-        }
-    })
+    return render_template('dashboard.html')
 
 
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 @app.route('/api/analytics', methods=['GET'])
+@cache.cached(timeout=300)
 def get_analytics():
     try:
         # Calculate analytics directly from the database
