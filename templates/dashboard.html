@@ -80,90 +80,96 @@
 
     <script>
         // Fetch data from API endpoints
-        async function fetchData(endpoint) {
-            const response = await fetch(endpoint);
-            return response.json();
-        }
+    async function fetchData(endpoint) {
+        const response = await fetch(endpoint);
+        return response.json();
+    }
 
-        // Update KPIs
-        async function updateKPIs() {
-            const analytics = await fetchData('/api/analytics');
-            document.getElementById('totalLicenses').textContent = analytics.total_licenses;
-            document.getElementById('activeLicenses').textContent = analytics.active_licenses;
-            document.getElementById('inactiveLicenses').textContent = analytics.inactive_licenses;
-        }
+    // Update KPIs
+    async function updateKPIs() {
+        const analytics = await fetchData('/api/analytics');
+        document.getElementById('totalLicenses').textContent = analytics.total_licenses;
+        document.getElementById('activeLicenses').textContent = analytics.active_licenses;
+        document.getElementById('inactiveLicenses').textContent = analytics.inactive_licenses;
+    }
 
-        // Create chart
-        function createChart(ctx, labels, data, title) {
-            return new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: [
-                            '#FF6384',
-                            '#36A2EB',
-                            '#FFCE56',
-                            '#4BC0C0',
-                            '#9966FF',
-                            '#FF9F40'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: title
-                        }
+    // Create chart
+    function createChart(ctx, labels, data, title) {
+        return new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: [
+                        '#FF6384',
+                        '#36A2EB',
+                        '#FFCE56',
+                        '#4BC0C0',
+                        '#9966FF',
+                        '#FF9F40'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: title
                     }
                 }
-            });
-        }
+            }
+        });
+    }
 
-        // Update license status chart
-        async function updateLicenseStatusChart() {
-            const statusData = await fetchData('/api/licenses/by-status');
-            const ctx = document.getElementById('licenseStatusChart').getContext('2d');
-            const labels = statusData.map(item => item._id);
-            const data = statusData.map(item => item.count);
-            createChart(ctx, labels, data, 'Licenses by Status');
-        }
+    // Update license status chart
+    async function updateLicenseStatusChart() {
+        const statusData = await fetchData('/api/licenses/by-status');
+        const ctx = document.getElementById('licenseStatusChart').getContext('2d');
+        const labels = statusData.map(item => item._id);
+        const data = statusData.map(item => item.count);
+        createChart(ctx, labels, data, 'Licenses by Status');
+    }
 
-        // Update license category chart
-        async function updateLicenseCategoryChart() {
-            const categoryData = await fetchData('/api/licenses/by-category');
-            const ctx = document.getElementById('licenseCategoryChart').getContext('2d');
-            const labels = categoryData.map(item => item._id);
-            const data = categoryData.map(item => item.count);
-            createChart(ctx, labels, data, 'Licenses by Category');
-        }
+    // Update license category chart
+    async function updateLicenseCategoryChart() {
+        const categoryData = await fetchData('/api/licenses/by-category');
+        const ctx = document.getElementById('licenseCategoryChart').getContext('2d');
+        const labels = categoryData.map(item => item._id);
+        const data = categoryData.map(item => item.count);
+        createChart(ctx, labels, data, 'Licenses by Category');
+    }
 
-        // Update recent licenses table
-        async function updateRecentLicenses() {
-            const licenses = await fetchData('/api/licenses?page=1&per_page=5');
-            const tableBody = document.querySelector('#licenseTable tbody');
-            tableBody.innerHTML = '';
-            licenses.forEach(license => {
-                const row = tableBody.insertRow();
-                row.insertCell(0).textContent = license.license_nbr;
-                row.insertCell(1).textContent = license.business_name;
-                row.insertCell(2).textContent = license.license_status;
-            });
-        }
+    // Update recent licenses table
+    async function updateRecentLicenses() {
+        const licenses = await fetchData('/api/licenses?page=1&per_page=5');
+        const tableBody = document.querySelector('#licenseTable tbody');
+        tableBody.innerHTML = '';
+        licenses.forEach(license => {
+            const row = tableBody.insertRow();
+            row.insertCell(0).textContent = license.license_nbr;
+            row.insertCell(1).textContent = license.business_name;
+            row.insertCell(2).textContent = license.license_status;
+        });
+    }
 
-        // Initialize dashboard
-        async function initDashboard() {
-            await updateKPIs();
-            await updateLicenseStatusChart();
-            await updateLicenseCategoryChart();
-            await updateRecentLicenses();
-        }
+    // Polling function to update every few seconds
+    async function pollData() {
+        await updateKPIs();
+        await updateLicenseStatusChart();
+        await updateLicenseCategoryChart();
+        await updateRecentLicenses();
+    }
 
-        // Run initialization
-        initDashboard();
+    // Initialize dashboard and set polling interval
+    async function initDashboard() {
+        pollData(); // Initial load
+        setInterval(pollData, 5000); // Poll every 5 seconds
+    }
+
+    // Run initialization
+    initDashboard();
     </script>
 </body>
 </html>

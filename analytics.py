@@ -6,6 +6,7 @@ from celery_task import calculate_analytics, process_data
 from celery.exceptions import OperationalError as CeleryOperationalError
 from flask_caching import Cache
 
+
 app = Flask(__name__)
 
 client = MongoClient('localhost', 27017)
@@ -18,9 +19,8 @@ def home():
     return render_template('dashboard.html')
 
 
-cache = Cache(app, config={'CACHE_TYPE': 'simple'})
+
 @app.route('/api/analytics', methods=['GET'])
-@cache.cached(timeout=300)
 def get_analytics():
     try:
         # Calculate analytics directly from the database
