@@ -390,6 +390,7 @@ The following functions were used to orchestrate the workflow:
 - run_main_script: This BashOperator task runs the main.py script, which fetches data from the API, stores it in Redis, transfers it to MongoDB, and updates the analytics.
 - The dag_directory variable stores the directory where the DAG file is located.
 - The run_main_script task is added to the DAG using the with dag: context manager.
+![Alt text](img_1.png)
 
 ### Conclusion
 This project demonstrates how to build a distributed data pipeline and analytics system using Redis, MongoDB, Flask, and Airflow. The system is designed to be scalable and fault-tolerant, and can be used to process and analyze large amounts of data from a variety of sources. The system ingests data from an API, caches it in Redis, stores it in MongoDB, and generates analytics insights. The frontend application interacts with the backend API to display the analytics insights to the user. The workflow orchestration is done using Airflow, which schedules and runs the data pipeline at regular intervals. This project provides a blueprint for building a distributed data pipeline and analytics system that can be customized and extended to meet specific requirements.

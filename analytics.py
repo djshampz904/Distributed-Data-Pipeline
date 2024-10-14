@@ -78,8 +78,8 @@ def licenses_by_borough():
 @app.route('/api/licenses/trend', methods=['GET'])
 def license_trend():
     try:
-        # Get the start date (30 days ago)
-        start_date = datetime.now() - timedelta(days=30)
+        # Get the start date (1 year ago)
+        start_date = datetime.now() - timedelta(days=365)
 
         pipeline = [
             {"$match": {"license_creation_date": {"$gte": start_date}}},

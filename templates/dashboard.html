@@ -348,14 +348,19 @@
         }
 
         // Initialize dashboard and set polling interval
+
         async function initDashboard() {
             pollData(); // Initial load
             updateMap(); // Initialize map (only needs to be done once)
+        }
+
+        async function startPolling() {
             setInterval(pollData, 5000); // Poll every 5 seconds
         }
 
-        // Run initialization
+        // Run initialization after every 5 seconds
         initDashboard();
+        startPolling();
     </script>
 </body>
 </html>
